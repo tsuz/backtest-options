@@ -3,8 +3,8 @@ package main
 import (
 	"io/ioutil"
 	"log"
-	"option-analysis/model"
-	"option-analysis/util"
+	"backtest-options/model"
+	"backtest-options/util"
 	"time"
 
 	"github.com/pkg/errors"

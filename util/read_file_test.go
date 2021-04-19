@@ -1,7 +1,7 @@
 package util
 
 import (
-	"option-analysis/model"
+	"backtest-options/model"
 	"testing"
 	"time"
 

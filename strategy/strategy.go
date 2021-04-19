@@ -1,7 +1,7 @@
 package strategy
 
 import (
-	"option-analysis/model"
+	"backtest-options/model"
 
 	"github.com/pkg/errors"
 )

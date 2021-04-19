@@ -2,7 +2,7 @@ package strategy
 
 import (
 	"log"
-	"option-analysis/model"
+	"backtest-options/model"
 
 	"github.com/shopspring/decimal"
 )

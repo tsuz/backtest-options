@@ -3,7 +3,7 @@ package util
 import (
 	"archive/zip"
 	"encoding/csv"
-	"option-analysis/model"
+	"backtest-options/model"
 	"time"
 
 	"github.com/pkg/errors"
