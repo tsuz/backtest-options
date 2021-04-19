@@ -1,7 +1,7 @@
 package strategy
 
 import (
-	"option-analysis/model"
+	"backtest-options/model"
 	"testing"
 	"time"
 
@@ -11,9 +11,9 @@ import (
 )
 
 func TestCoveredCall(t *testing.T) {
-	june1, _ := time.Parse(model.DateLayout, "2006/06/01")
-	july2, _ := time.Parse(model.DateLayout, "2006/07/02")
-	aug2, _ := time.Parse(model.DateLayout, "2006/08/02")
+	june1, _ := time.Parse(model.DateLayout, "2006-06-01")
+	july2, _ := time.Parse(model.DateLayout, "2006-07-02")
+	aug2, _ := time.Parse(model.DateLayout, "2006-08-02")
 
 	v1, _ := model.NewOHLCV(june1, "SPY", july2, "116", model.Call, "1", "1", "1", "1", "623", "115.5", "116.5")
 	v2, _ := model.NewOHLCV(july2, "SPY", july2, "116", model.Call, "0.5", "0.5", "0.5", "0.5", "623", "117.5", "118.5")

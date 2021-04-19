@@ -1,7 +1,7 @@
 package util
 
 import (
-	"option-analysis/model"
+	"backtest-options/model"
 	"testing"
 	"time"
 
@@ -9,8 +9,8 @@ import (
 )
 
 func TestReadFile(t *testing.T) {
-	june1, _ := time.Parse(model.DateLayout, "2016/06/01")
-	june8, _ := time.Parse(model.DateLayout, "2016/06/08")
+	june1, _ := time.Parse(model.DateLayout, "2016-06-01")
+	june8, _ := time.Parse(model.DateLayout, "2016-06-08")
 
 	ohlcv1, _ := model.NewOHLCV(june1, "^VIX", june8, "14", model.Put, "0.1", "0.25", "0.1", "0.25", "623", "14.24", "14.24")
 	ohlcv2, _ := model.NewOHLCV(june1, "^VIX", june8, "14.5", model.Call, "1", "1.1", "0.65", "0.65", "55", "14.24", "14.24")
