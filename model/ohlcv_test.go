@@ -9,12 +9,12 @@ import (
 
 func TestOHLCV(t *testing.T) {
 	layout := DateLayout
-	qdstr := "2005/01/13"
+	qdstr := "2005-01-13"
 	quoteDate, err := time.Parse(layout, qdstr)
 	if err != nil {
 		t.Fatal(errors.Wrap(err, "Error quote date failed to parse"))
 	}
-	edstr := "2005/01/13"
+	edstr := "2005-01-13"
 	expi, err := time.Parse(layout, edstr)
 	if err != nil {
 		t.Fatal(errors.Wrap(err, "Error quote date failed to parse"))

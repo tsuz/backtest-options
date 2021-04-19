@@ -10,11 +10,11 @@ import (
 )
 
 func TestOptionChain(t *testing.T) {
-	may1, _ := time.Parse(DateLayout, "2016/05/01")
-	june1, _ := time.Parse(DateLayout, "2016/06/01")
-	june20, _ := time.Parse(DateLayout, "2016/06/20")
-	july2, _ := time.Parse(DateLayout, "2016/07/02")
-	aug1, _ := time.Parse(DateLayout, "2016/08/01")
+	may1, _ := time.Parse(DateLayout, "2016-05-01")
+	june1, _ := time.Parse(DateLayout, "2016-06-01")
+	june20, _ := time.Parse(DateLayout, "2016-06-20")
+	july2, _ := time.Parse(DateLayout, "2016-07-02")
+	aug1, _ := time.Parse(DateLayout, "2016-08-01")
 	ohlcv1, _ := NewOHLCV(june1, "SPY", july2, "116", Call, "1", "1", "1", "1", "623", "115.5", "116.5")
 	ohlcv2, _ := NewOHLCV(june1, "SPY", july2, "116", Put, "0.5", "0.5", "0.5", "0.5", "623", "115.5", "116.5")
 	ohlcv3, _ := NewOHLCV(july2, "SPY", july2, "116", Call, "0.5", "0.5", "0.5", "0.5", "623", "117.5", "118.5")

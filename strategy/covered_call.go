@@ -15,7 +15,6 @@ func (s *strategy) CoveredCall(opts model.StrategyOpts) ([]model.ExecOpenClose, 
 	minexpday := opts.MinExpDays
 
 	for {
-		log.Printf("Start date is %+v", start)
 		optchain := s.optchain.GetOptionChainForQuoteDate(start, false)
 		if optchain == nil {
 			log.Printf("Exiting since quote does not exist for date %+v", start)
