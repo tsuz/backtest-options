@@ -1,4 +1,56 @@
 # backtest-options
-Backtest options strategy using historical data
 
-[![codecov](https://codecov.io/gh/tsuz/backtest-options/branch/main/graph/badge.svg?token=pYlB8aWJzB)](https://codecov.io/gh/tsuz/backtest-options)
+Backtest options strategy using historical data from livevol
+
+[![Build Status](https://travis-ci.org/tsuz/backtest-options.svg?branch=main)](https://travis-ci.org/tsuz/backtest-options) [![codecov](https://codecov.io/gh/tsuz/backtest-options/branch/main/graph/badge.svg?token=pYlB8aWJzB)](https://codecov.io/gh/tsuz/backtest-options)
+
+
+
+
+## Examples
+
+To import data from live vol into your system,
+
+```
+go build
+> ./backtest-options import /<livevol-dir>
+
+Successfully imported
+
+```
+
+to use the data for strategy, run
+
+```
+> ./backtest-options strategy covered-call
+
++------------+------------+--------------+----------------+-----------------+---------------+----------------+
+| OPEN DATE  | CLOSE DATE | TOTAL PROFIT | OPTION OPEN PX | OPTION CLOSE PX | STOCK OPEN PX | STOCK CLOSE PX |
++------------+------------+--------------+----------------+-----------------+---------------+----------------+
+| 2005-01-10 | 2005-02-19 |          -10 |              0 |               0 |       118.845 |        118.745 |
+| 2005-02-22 | 2005-04-16 |       -403.5 |              0 |               0 |       118.745 |         114.71 |
+| 2005-04-18 | 2005-05-21 |          506 |              0 |               0 |        114.71 |         119.77 |
+| 2005-05-23 | 2005-07-16 |        254.5 |              0 |               0 |        119.77 |        122.315 |
+| 2005-07-18 | 2005-08-20 |           15 |           0.05 |               0 |       122.315 |        122.415 |
+| 2005-08-22 | 2005-10-22 |         -252 |            0.2 |               0 |       122.415 |        119.695 |
+| 2005-10-24 | 2005-12-17 |          616 |           0.05 |               0 |       119.695 |        125.805 |
+| 2005-12-19 | 2006-01-21 |           93 |            0.4 |               0 |       125.805 |        126.335 |
+| 2006-01-23 | 2006-03-18 |        461.5 |           0.95 |               0 |       126.335 |            130 |
+| 2006-03-20 | 2006-04-22 |          225 |            1.8 |               0 |       130.525 |        130.975 |
+| 2006-04-24 | 2006-06-17 |         -469 |            2.4 |               0 |       130.975 |        123.885 |
+| 2006-06-19 | 2006-07-22 |          261 |           0.35 |               0 |       123.885 |        126.145 |
+| 2006-07-24 | 2006-09-16 |        460.5 |           0.75 |               0 |       126.145 |            130 |
+| 2006-09-18 | 2006-10-21 |        189.5 |           1.85 |               0 |       131.955 |            132 |
+| 2006-10-23 | 2006-12-16 |        222.5 |           1.95 |               0 |       137.725 |            138 |
+| 2006-12-18 | 2007-01-20 |        246.5 |            2.4 |               0 |       141.935 |            142 |
+| 2007-01-22 | 2007-03-17 |        117.5 |            3.5 |               0 |       142.295 |         139.97 |
+| 2007-03-19 | 2007-04-21 |          213 |            2.1 |               0 |        139.97 |            140 |
+| 2007-04-23 | 2007-06-16 |        332.5 |            3.5 |               0 |       148.175 |            148 |
+| 2007-06-18 | 2007-07-21 |          117 |              0 |               0 |       153.015 |        154.185 |
++------------+------------+--------------+----------------+-----------------+---------------+----------------+
++--------------+------------------+
+| TOTAL PROFIT | TOTAL EXECUTIONS |
++--------------+------------------+
+|       3196.5 |               20 |
++--------------+------------------+
+```
