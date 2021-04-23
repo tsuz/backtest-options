@@ -1,6 +1,7 @@
 package model
 
 import (
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
@@ -32,7 +33,7 @@ type OptChainExp struct {
 
 // OptChainStrike is a row of option chain for strike, put, and call
 type OptChainStrike struct {
-	// S    decimal.Decimal
+	S    decimal.Decimal
 	Put  OHLCV
 	Call OHLCV
 }
@@ -54,6 +55,9 @@ func NewOptionChain(data []OHLCV) (*OptChainList, error) {
 	}
 
 	optChainList.quotes = quoteDateList
+	sort.Slice(optChainList.quotes, func(i, j int) bool {
+		return optChainList.quotes[i].Before(optChainList.quotes[j])
+	})
 
 	// for each quote date list, retrieve expire dates
 	for _, d := range quoteDateList {
@@ -83,6 +87,9 @@ func NewOptionChain(data []OHLCV) (*OptChainList, error) {
 		}
 		optChain.QuoteDate = d
 		optChain.expiry = expiry
+		sort.Slice(optChain.expiry, func(i, j int) bool {
+			return optChain.expiry[i].Before(optChain.expiry[j])
+		})
 		if underlying != nil {
 			optChain.UndPx = underlying.UndBid.Add(underlying.UndAsk).Div(decimal.NewFromFloat(2.0))
 		}
@@ -94,7 +101,9 @@ func NewOptionChain(data []OHLCV) (*OptChainList, error) {
 			ohlcvs := expiryMap[exp]
 			for _, ohlcv := range ohlcvs {
 				if _, ok := strikeMap[ohlcv.Strike.String()]; !ok {
-					strikeMap[ohlcv.Strike.String()] = &OptChainStrike{}
+					strikeMap[ohlcv.Strike.String()] = &OptChainStrike{
+						S: ohlcv.Strike,
+					}
 					strikes = append(strikes, ohlcv.Strike)
 				}
 				if ohlcv.Type == Call {
