@@ -2,6 +2,8 @@ package util
 
 import (
 	"backtest-options/model"
+	"encoding/csv"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,27 +11,23 @@ import (
 )
 
 func TestReadFile(t *testing.T) {
-	june1, _ := time.Parse(model.DateLayout, "2016-06-01")
-	june8, _ := time.Parse(model.DateLayout, "2016-06-08")
+	jan10, _ := time.Parse(model.DateLayout, "2005-01-10")
+	jan22, _ := time.Parse(model.DateLayout, "2005-01-22")
 
-	ohlcv1, _ := model.NewOHLCV(june1, "^VIX", june8, "14", model.Put, "0.1", "0.25", "0.1", "0.25", "623", "14.24", "14.24")
-	ohlcv2, _ := model.NewOHLCV(june1, "^VIX", june8, "14.5", model.Call, "1", "1.1", "0.65", "0.65", "55", "14.24", "14.24")
-	ohlcv3, _ := model.NewOHLCV(june1, "^VIX", june8, "14.5", model.Put, "0.3", "0.55", "0.3", "0.55", "67", "14.24", "14.24")
-	ohlcv4, _ := model.NewOHLCV(june1, "^VIX", june8, "15", model.Call, "0.9", "0.95", "0.5", "0.5", "82", "14.24", "14.24")
+	ohlcv1, _ := model.NewOHLCV(jan10, "SPY", jan22, "130", model.Call, "1", "2", "0", "1", "1200", "118.94", "118.95")
 
 	expData := []model.OHLCV{
 		ohlcv1,
-		ohlcv2,
-		ohlcv3,
-		ohlcv4,
 	}
 	reader := NewFileReader()
-	data, err := reader.ReadFile("./../testdata/quotes_sample.zip")
+	s := `underlying_symbol,quote_date,expiration,strike,option_type,open,high,low,close,trade_volume,bid_size_1545,bid_1545,ask_size_1545,ask_1545,underlying_bid_1545,underlying_ask_1545,vwap,open_interest,delivery_code
+SPY,2005-01-10,2005-01-22,130.000,C,1.0000,2.0000,0.0000,1.0000,1200,0,0.0000,195,0.0500,118.9400,118.9500,0.0000,0,`
+
+	r := csv.NewReader(strings.NewReader(s))
+
+	data, err := reader.ReadNormalizedCSVFile(r)
 	if err != nil {
 		t.Fatal(errors.Wrap(err, "Error reading file"))
-	}
-	if len(data) != 4 {
-		t.Errorf("Expected 4 items but got %+v", len(data))
 	}
 
 	for idx, d := range data {

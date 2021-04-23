@@ -8,6 +8,28 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	csvLivevolUndSym       = 0
+	csvLivevolQuoteDate    = 1
+	csvLivevolExp          = 3
+	csvLivevolStrike       = 4
+	csvLivevolOptType      = 5
+	csvLivevolOpen         = 6
+	csvLivevolHigh         = 7
+	csvLivevolLow          = 8
+	csvLivevolClose        = 9
+	csvLivevolVol          = 10
+	csvLivevolBidSize      = 11
+	csvLivevolBid          = 12
+	csvLivevolAskSize      = 13
+	csvLivevolAsk          = 14
+	csvLivevolUndBid       = 15
+	csvLivevolUndAsk       = 16
+	csvLivevolVwap         = 23
+	csvLivevolOpenInterest = 24
+	csvLivevolDelivCode    = 25
+)
+
 type liveVolImporter struct {
 	writer *csv.Writer
 }
