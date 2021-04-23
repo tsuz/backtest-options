@@ -17,9 +17,9 @@ func TestCoveredCall(t *testing.T) {
 	aug2, _ := time.Parse(model.DateLayout, "2006-08-02")
 
 	v1, _ := model.NewOHLCV(june1, "SPY", july2, "116", model.Call, "1", "1", "1", "1", "623", "115.5", "116.5")
-	v2, _ := model.NewOHLCV(july2, "SPY", july2, "116", model.Call, "0.5", "0.5", "0.5", "0.5", "623", "117.5", "118.5")
+	v2, _ := model.NewOHLCV(july2, "SPY", july2, "116", model.Call, "0", "0", "0", "0", "623", "117.5", "118.5")
 	v3, _ := model.NewOHLCV(july2, "SPY", aug2, "118", model.Call, "1.1", "1.1", "1.1", "1.1", "55", "117.5", "118.5")
-	v4, _ := model.NewOHLCV(aug2, "SPY", aug2, "118", model.Call, "0.1", "0.1", "0.1", "0.1", "55", "119.8", "120")
+	v4, _ := model.NewOHLCV(aug2, "SPY", aug2, "118", model.Call, "0.0", "0.0", "0.0", "0.0", "55", "119.8", "120")
 
 	opts := model.StrategyOpts{
 		StartDate:  june1,
@@ -29,7 +29,7 @@ func TestCoveredCall(t *testing.T) {
 		Opts: opts,
 		Execs: []model.ExecLegs{
 			model.ExecLegs{
-				TotalProfit: decimal.NewFromFloat(50.0),
+				TotalProfit: decimal.NewFromFloat(100.0),
 				Leg: map[string]*model.ExecOpenClose{
 					"buy-stock": &model.ExecOpenClose{
 						Product: model.Stock,
@@ -56,7 +56,7 @@ func TestCoveredCall(t *testing.T) {
 						},
 						Close: model.Exec{
 							Date: july2,
-							Px:   decimal.NewFromFloat(0.5),
+							Px:   decimal.NewFromFloat(0),
 							Qty:  decimal.NewFromInt(1),
 							Side: model.Buy,
 						},
@@ -64,7 +64,7 @@ func TestCoveredCall(t *testing.T) {
 				},
 			},
 			model.ExecLegs{
-				TotalProfit: decimal.NewFromFloat(100.0),
+				TotalProfit: decimal.NewFromFloat(110.0),
 				Leg: map[string]*model.ExecOpenClose{
 					"buy-stock": &model.ExecOpenClose{
 						Product: model.Stock,
@@ -91,7 +91,7 @@ func TestCoveredCall(t *testing.T) {
 						},
 						Close: model.Exec{
 							Date: aug2,
-							Px:   decimal.NewFromFloat(0.1),
+							Px:   decimal.NewFromFloat(0.0),
 							Qty:  decimal.NewFromInt(1),
 							Side: model.Buy,
 						},
@@ -100,7 +100,7 @@ func TestCoveredCall(t *testing.T) {
 			},
 		},
 		Meta: model.StrategyMeta{
-			TotalProfit:     decimal.NewFromFloat(150.0),
+			TotalProfit:     decimal.NewFromFloat(210.0),
 			TotalExecutions: 2,
 		},
 	}
@@ -189,7 +189,7 @@ func TestCoveredCall(t *testing.T) {
 	metawant := `+--------------+------------------+
 | TOTAL PROFIT | TOTAL EXECUTIONS |
 +--------------+------------------+
-|          150 |                2 |
+|          210 |                2 |
 +--------------+------------------+
 `
 	if metaBuf.String() != metawant {
@@ -206,8 +206,8 @@ func TestCoveredCall(t *testing.T) {
 	want := `+------------+------------+--------------+----------------+-----------------+---------------+----------------+
 | OPEN DATE  | CLOSE DATE | TOTAL PROFIT | OPTION OPEN PX | OPTION CLOSE PX | STOCK OPEN PX | STOCK CLOSE PX |
 +------------+------------+--------------+----------------+-----------------+---------------+----------------+
-| 2006-06-01 | 2006-07-02 |           50 |              1 |             0.5 |           116 |            116 |
-| 2006-07-02 | 2006-08-02 |          100 |            1.1 |             0.1 |           118 |            118 |
+| 2006-06-01 | 2006-07-02 |          100 |              1 |               0 |           116 |            116 |
+| 2006-07-02 | 2006-08-02 |          110 |            1.1 |               0 |           118 |            118 |
 +------------+------------+--------------+----------------+-----------------+---------------+----------------+
 `
 	if detailBuf.String() != want {
