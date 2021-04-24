@@ -75,7 +75,6 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 		)
 
 		expire := expchain.ExpireDate
-		log.Debugf("Quotedate: %+v, expiredate: %+v", quotedate, expdate)
 		expiredquote := s.optchain.GetOptionChainForQuoteDate(expire, false)
 		if expiredquote == nil {
 			log.Debugf("Exiting since GetOptionChainForQuoteDate does not exist for quotedate: %+v, expiredate: %+v, start: %+v",
