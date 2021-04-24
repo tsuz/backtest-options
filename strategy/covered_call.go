@@ -75,7 +75,6 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 		)
 
 		expire := expchain.ExpireDate
-		log.Debugf("Quotedate: %+v, expiredate: %+v", quotedate, expdate)
 		expiredquote := s.optchain.GetOptionChainForQuoteDate(expire, false)
 		if expiredquote == nil {
 			log.Debugf("Exiting since GetOptionChainForQuoteDate does not exist for quotedate: %+v, expiredate: %+v, start: %+v",
@@ -117,6 +116,7 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 
 	data := [][]string{}
+	cumprofit := decimal.Decimal{}
 
 	for _, ex := range r.Execs {
 
@@ -129,6 +129,7 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 			return errors.Errorf("Error %+v key is not included", buyStockLeg)
 		}
 
+		cumprofit = cumprofit.Add(ex.TotalProfit)
 		d := []string{
 			cc.Open.Date.Format(model.DateLayout),
 			cc.Close.Date.Format(model.DateLayout),
@@ -138,6 +139,7 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 			cc.Close.Px.String(),
 			stk.Open.Px.String(),
 			stk.Close.Px.String(),
+			cumprofit.String(),
 		}
 		data = append(data, d)
 	}
@@ -152,6 +154,7 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 		"Option Close Px",
 		"Stock Open Px",
 		"Stock Close Px",
+		"Cumulative Profit",
 	})
 
 	for _, v := range data {
@@ -165,9 +168,15 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 func (s *coveredCall) OutputMeta(w io.Writer, r *model.StrategyResult) error {
 
 	data := [][]string{}
+	zero := decimal.NewFromInt(0)
+	hundred := decimal.NewFromInt(100)
+	cumprofit := decimal.NewFromInt(0)
+	maxdrawdown := decimal.NewFromInt(0)
+	one := decimal.NewFromInt(1)
+	firstPx := decimal.NewFromInt(0)
+	lastPx := decimal.NewFromInt(0)
 
-	for _, ex := range r.Execs {
-
+	for idx, ex := range r.Execs {
 		cc, ok := ex.Leg[coveredCallLeg]
 		if !ok {
 			return errors.Errorf("Error %+v key is not included", coveredCallLeg)
@@ -176,7 +185,25 @@ func (s *coveredCall) OutputMeta(w io.Writer, r *model.StrategyResult) error {
 		if !ok {
 			return errors.Errorf("Error %+v key is not included", buyStockLeg)
 		}
+		if idx == 0 {
+			firstPx = stk.Open.Px
+		}
+		if idx == len(r.Execs)-1 {
+			lastPx = stk.Close.Px
+		}
 
+		newprofit := cumprofit.Add(ex.TotalProfit)
+		if cumprofit.GreaterThan(zero) {
+			drawdown := newprofit.Div(cumprofit)
+			if drawdown.LessThan(one) {
+				diff := one.Sub(drawdown)
+				if diff.GreaterThan(maxdrawdown) {
+					maxdrawdown = diff
+				}
+			}
+		}
+
+		cumprofit = newprofit
 		d := []string{
 			cc.Open.Date.Format(model.DateLayout),
 			cc.Close.Date.Format(model.DateLayout),
@@ -193,11 +220,20 @@ func (s *coveredCall) OutputMeta(w io.Writer, r *model.StrategyResult) error {
 	table.SetHeader([]string{
 		"Total Profit",
 		"Total Executions",
+		"Max Drawdown",
+		"Buy & Hold",
 	})
+	initbp := firstPx.Mul(hundred)
 	data = [][]string{
 		[]string{
-			r.Meta.TotalProfit.String(),
+			fmt.Sprintf("%s (%s %%)",
+				r.Meta.TotalProfit.StringFixed(2),
+				r.Meta.TotalProfit.Div(initbp).Mul(hundred).StringFixed(2)),
 			fmt.Sprintf("%d", r.Meta.TotalExecutions),
+			fmt.Sprintf("%s", maxdrawdown.Mul(hundred).StringFixed(2)),
+			fmt.Sprintf("%s (%s %%)",
+				lastPx.Sub(firstPx).Mul(hundred).StringFixed(2),
+				lastPx.Sub(firstPx).Mul(hundred).Mul(hundred).Div(initbp).StringFixed(2)),
 		},
 	}
 
