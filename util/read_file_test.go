@@ -14,14 +14,14 @@ func TestReadFile(t *testing.T) {
 	jan10, _ := time.Parse(model.DateLayout, "2005-01-10")
 	jan22, _ := time.Parse(model.DateLayout, "2005-01-22")
 
-	ohlcv1, _ := model.NewOHLCV(jan10, "SPY", jan22, "130", model.Call, "1", "2", "0", "1", "1200", "118.94", "118.95")
+	ohlcv1, _ := model.NewOHLCV(jan10, "SPY", jan22, "130", model.Call, "1", "2", "0", "1", "1200", "1.1", "0.9", "118.94", "118.95")
 
 	expData := []model.OHLCV{
 		ohlcv1,
 	}
 	reader := NewFileReader()
-	s := `underlying_symbol,quote_date,expiration,strike,option_type,open,high,low,close,trade_volume,bid_size_1545,bid_1545,ask_size_1545,ask_1545,underlying_bid_1545,underlying_ask_1545,vwap,open_interest,delivery_code
-SPY,2005-01-10,2005-01-22,130.000,C,1.0000,2.0000,0.0000,1.0000,1200,0,0.0000,195,0.0500,118.9400,118.9500,0.0000,0,`
+	s := `underlying_symbol,quote_date,expiration,strike,option_type,open,high,low,close,trade_volume,bid_size_eod,bid_eod,ask_size_eod,ask_eod,underlying_bid_eod,underlying_ask_eod,vwap,open_interest,delivery_code
+SPY,2005-01-10,2005-01-22,130.000,C,1.0000,2.0000,0.0000,1.0000,1200,15,0.900,195,1.1,118.9400,118.9500,0.0000,0,`
 
 	r := csv.NewReader(strings.NewReader(s))
 

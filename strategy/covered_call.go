@@ -4,7 +4,6 @@ import (
 	"backtest-options/model"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
@@ -61,16 +60,19 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 			quotedate,
 			px,
 			stkqty,
-			model.Buy)
+			model.Buy,
+			"Stock")
 
 		// write 1 option contract
 		optqty := decimal.NewFromInt(1)
 		optleg := model.NewOpenExec(
 			model.Option,
 			quotedate,
-			strike.Call.Open,
+			strike.Call.AskBidMid,
 			optqty,
-			model.Sell)
+			model.Sell,
+			fmt.Sprintf("%+v C %+v", strike.S.String(), expchain.ExpireDate.Format("2006-01-02")),
+		)
 
 		expire := expchain.ExpireDate
 		log.Debugf("Quotedate: %+v, expiredate: %+v", quotedate, expdate)
@@ -91,30 +93,8 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 		}
 		stkleg.CloseExec(expire, adjendpx)
 
-		expireQuoteDay := expire
-		if expire.Weekday() == 6 {
-			expireQuoteDay = expire.Add(time.Hour * 24 * -1)
-		}
-		optexpquote := expiredquote.GetOptionChainForExpiryDate(expireQuoteDay, false)
-		if optexpquote == nil {
-			log.Debugf("Exiting since GetOptionChainForExpiryDate does not exist for quotedate: %+v, expiredate: %+v, start: %+v",
-				expireQuoteDay,
-				expire,
-				start)
-			break
-		}
-		optlegclosepx := optexpquote.GetOptionChainForStrike(strike.S, true)
-		if optlegclosepx == nil {
-			log.Debugf("Exiting since GetOptionChainForStrike does not exist for strike: %+v, quotedate: %+v, expiredate: %+v, start: %+v",
-				strike.S,
-				expireQuoteDay,
-				expire,
-				start)
-			break
-		}
 		optleg.CloseExec(expire, decimal.NewFromInt(0))
 
-		log.Debugf("Opening option at :%+v, close: %+v", strike, optlegclosepx)
 		legs := map[string]*model.ExecOpenClose{
 			coveredCallLeg: optleg,
 			buyStockLeg:    stkleg,
@@ -152,6 +132,7 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 		d := []string{
 			cc.Open.Date.Format(model.DateLayout),
 			cc.Close.Date.Format(model.DateLayout),
+			cc.Name,
 			ex.TotalProfit.String(),
 			cc.Open.Px.String(),
 			cc.Close.Px.String(),
@@ -165,6 +146,7 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 	table.SetHeader([]string{
 		"Open Date",
 		"Close Date",
+		"Call Product",
 		"Total Profit",
 		"Option Open Px",
 		"Option Close Px",

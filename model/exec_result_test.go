@@ -13,7 +13,8 @@ func TestNewOpenExec(t *testing.T) {
 	px := decimal.NewFromFloat(165.23)
 	qty := decimal.NewFromInt(100)
 	side := Buy
-	exec := NewOpenExec(Stock, now, px, qty, side)
+	name := "test1"
+	exec := NewOpenExec(Stock, now, px, qty, side, name)
 	if !exec.Open.Date.Equal(now) {
 		t.Error(errors.Errorf("Expected date to be %+v but got %+v", exec.Open.Date, now))
 	}
@@ -35,5 +36,8 @@ func TestNewOpenExec(t *testing.T) {
 	}
 	if exec.Close.Side != Sell {
 		t.Error(errors.Errorf("Expected side to be %+v but got %+v", exec.Close.Side, Sell))
+	}
+	if exec.Name != name {
+		t.Error(errors.Errorf("Expected name to be %+v but got %+v", exec.Name, name))
 	}
 }

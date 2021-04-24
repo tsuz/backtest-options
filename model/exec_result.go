@@ -26,9 +26,10 @@ const (
 
 // ExecOpenClose is open and close exec
 type ExecOpenClose struct {
-	Product ProductType
-	Open    Exec
 	Close   Exec
+	Name    string
+	Open    Exec
+	Product ProductType
 }
 
 // Exec is a result of execution
@@ -46,8 +47,10 @@ func NewOpenExec(
 	px decimal.Decimal,
 	qty decimal.Decimal,
 	side Side,
+	name string,
 ) *ExecOpenClose {
 	return &ExecOpenClose{
+		Name: name,
 		Open: Exec{
 			Date: date,
 			Px:   px,
