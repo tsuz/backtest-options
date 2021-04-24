@@ -15,7 +15,8 @@ func TestExecLegs(t *testing.T) {
 		time.Now(),
 		decimal.NewFromFloat(10.0),
 		decimal.NewFromInt(1),
-		Sell)
+		Sell,
+		"name1")
 	covcall.CloseExec(time.Now(), decimal.NewFromFloat(3.3))
 
 	stock := NewOpenExec(
@@ -23,7 +24,8 @@ func TestExecLegs(t *testing.T) {
 		time.Now(),
 		decimal.NewFromFloat(175.3),
 		decimal.NewFromInt(100),
-		Buy)
+		Buy,
+		"name2")
 	stock.CloseExec(time.Now(), decimal.NewFromFloat(174.2))
 	execs := map[string]*ExecOpenClose{
 		"covered-call": covcall,

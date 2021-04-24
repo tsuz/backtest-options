@@ -84,6 +84,8 @@ func (fr *fr) ReadNormalizedCSVFile(r *csv.Reader) ([]model.OHLCV, error) {
 			field[csvStdLow],
 			field[csvStdClose],
 			field[csvStdVol],
+			field[csvStdAsk],
+			field[csvStdBid],
 			field[csvStdUndAsk],
 			field[csvStdUndBid],
 		)

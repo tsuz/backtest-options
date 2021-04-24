@@ -15,10 +15,12 @@ func TestOptionChain(t *testing.T) {
 	june20, _ := time.Parse(DateLayout, "2016-06-20")
 	july2, _ := time.Parse(DateLayout, "2016-07-02")
 	aug1, _ := time.Parse(DateLayout, "2016-08-01")
-	ohlcv1, _ := NewOHLCV(june1, "SPY", july2, "116", Call, "1", "1", "1", "1", "623", "115.5", "116.5")
-	ohlcv2, _ := NewOHLCV(june1, "SPY", july2, "116", Put, "0.5", "0.5", "0.5", "0.5", "623", "115.5", "116.5")
-	ohlcv3, _ := NewOHLCV(july2, "SPY", july2, "116", Call, "0.5", "0.5", "0.5", "0.5", "623", "117.5", "118.5")
+	ohlcv0, _ := NewOHLCV(june1, "SPY", july2, "118", Call, "1", "1", "1", "1", "623", "1", "1", "115.5", "116.5")
+	ohlcv1, _ := NewOHLCV(june1, "SPY", july2, "116", Call, "1", "1", "1", "1", "623", "1", "1", "115.5", "116.5")
+	ohlcv2, _ := NewOHLCV(june1, "SPY", july2, "116", Put, "0.5", "0.5", "0.5", "0.5", "623", "0.5", "0.5", "115.5", "116.5")
+	ohlcv3, _ := NewOHLCV(july2, "SPY", july2, "116", Call, "0.5", "0.5", "0.5", "0.5", "623", "0.5", "0.5", "117.5", "118.5")
 	testData := []OHLCV{
+		ohlcv0,
 		ohlcv1,
 		ohlcv2,
 		ohlcv3,

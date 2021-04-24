@@ -19,12 +19,12 @@ const (
 	csvLivevolLow          = 8
 	csvLivevolClose        = 9
 	csvLivevolVol          = 10
-	csvLivevolBidSize      = 11
-	csvLivevolBid          = 12
-	csvLivevolAskSize      = 13
-	csvLivevolAsk          = 14
-	csvLivevolUndBid       = 15
-	csvLivevolUndAsk       = 16
+	csvLivevolBidSize      = 17
+	csvLivevolBid          = 18
+	csvLivevolAskSize      = 19
+	csvLivevolAsk          = 20
+	csvLivevolUndBid       = 21
+	csvLivevolUndAsk       = 22
 	csvLivevolVwap         = 23
 	csvLivevolOpenInterest = 24
 	csvLivevolDelivCode    = 25
@@ -59,12 +59,12 @@ func (livevol *liveVolImporter) ImportFolder(folder string) error {
 		"low",
 		"close",
 		"trade_volume",
-		"bid_size_1545",
-		"bid_1545",
-		"ask_size_1545",
-		"ask_1545",
-		"underlying_bid_1545",
-		"underlying_ask_1545",
+		"bid_size_eod",
+		"bid_eod",
+		"ask_size_eod",
+		"ask_eod",
+		"underlying_bid_eod",
+		"underlying_ask_eod",
 		"vwap",
 		"open_interest",
 		"delivery_code",

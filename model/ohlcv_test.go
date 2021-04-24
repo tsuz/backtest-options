@@ -25,10 +25,12 @@ func TestOHLCV(t *testing.T) {
 	low := "20.4"
 	close := "20.5"
 	vol := "50"
+	ask := "20.2"
+	bid := "20.1"
 	strike := "117.5"
 	undAsk := "117.7"
 	undBid := "117.6"
-	ohlcv, _ := NewOHLCV(quoteDate, symbol, expi, strike, Call, open, high, low, close, vol, undAsk, undBid)
+	ohlcv, _ := NewOHLCV(quoteDate, symbol, expi, strike, Call, open, high, low, close, vol, ask, bid, undAsk, undBid)
 	if ohlcv.QuoteDate != quoteDate {
 		t.Error(errors.Errorf("Expected %+v but got %+v", quoteDate, ohlcv.QuoteDate))
 	}
@@ -58,6 +60,15 @@ func TestOHLCV(t *testing.T) {
 	}
 	if ohlcv.Volume.String() != vol {
 		t.Error(errors.Errorf("Expected %+v but got %+v", vol, ohlcv.Volume))
+	}
+	if ohlcv.Ask.String() != ask {
+		t.Error(errors.Errorf("Expected %+v but got %+v", ask, ohlcv.Ask))
+	}
+	if ohlcv.AskBidMid.String() != "20.15" {
+		t.Error(errors.Errorf("Expected 20.15 but got %+v", ohlcv.AskBidMid))
+	}
+	if ohlcv.Bid.String() != bid {
+		t.Error(errors.Errorf("Expected %+v but got %+v", bid, ohlcv.Bid))
 	}
 	if ohlcv.UndAsk.String() != undAsk {
 		t.Error(errors.Errorf("Expected %+v but got %+v", undAsk, ohlcv.UndAsk))

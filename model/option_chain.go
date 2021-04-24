@@ -112,6 +112,9 @@ func NewOptionChain(data []OHLCV) (*OptChainList, error) {
 					strikeMap[ohlcv.Strike.String()].Put = ohlcv
 				}
 			}
+			sort.Slice(strikes, func(i, j int) bool {
+				return strikes[i].LessThan(strikes[j])
+			})
 			optExpiryMap[exp] = &OptChainExp{
 				ExpireDate: exp,
 				strike:     strikes,

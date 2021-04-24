@@ -27,6 +27,8 @@ const (
 type OHLCV struct {
 	// Ask is the last contract's lowest sell price
 	Ask decimal.Decimal
+	// AskBidMid is the mid price of the ask and bid
+	AskBidMid decimal.Decimal
 	// Bid is the last contract's highest buy price
 	Bid decimal.Decimal
 	// Close is the option contract's close price
@@ -56,7 +58,7 @@ type OHLCV struct {
 }
 
 // NewOHLCV Creates a new OHLCV
-func NewOHLCV(d time.Time, sym string, exp time.Time, s string, typ OptType, o, h, l, c, v, unda, undb string) (OHLCV, error) {
+func NewOHLCV(d time.Time, sym string, exp time.Time, s string, typ OptType, o, h, l, c, v, ask, bid, unda, undb string) (OHLCV, error) {
 
 	close, err := decimal.NewFromString(c)
 	if err != nil {
@@ -83,6 +85,17 @@ func NewOHLCV(d time.Time, sym string, exp time.Time, s string, typ OptType, o, 
 		return OHLCV{}, errors.Wrapf(err, "Error parsing strike: %+v", s)
 	}
 
+	a, err := decimal.NewFromString(ask)
+	if err != nil {
+		return OHLCV{}, errors.Wrapf(err, "Error parsing ask price: %+v", ask)
+	}
+
+	b, err := decimal.NewFromString(bid)
+	if err != nil {
+		return OHLCV{}, errors.Wrapf(err, "Error parsing bid price: %+v", undb)
+	}
+	abm := a.Add(b).Div(decimal.NewFromInt(2))
+
 	undask, err := decimal.NewFromString(unda)
 	if err != nil {
 		return OHLCV{}, errors.Wrapf(err, "Error parsing underlying ask price: %+v", unda)
@@ -90,7 +103,7 @@ func NewOHLCV(d time.Time, sym string, exp time.Time, s string, typ OptType, o, 
 
 	undbid, err := decimal.NewFromString(undb)
 	if err != nil {
-		return OHLCV{}, errors.Wrapf(err, "Error parsing underlying big price: %+v", undb)
+		return OHLCV{}, errors.Wrapf(err, "Error parsing underlying bid price: %+v", undb)
 	}
 
 	volume, err := decimal.NewFromString(v)
@@ -99,6 +112,9 @@ func NewOHLCV(d time.Time, sym string, exp time.Time, s string, typ OptType, o, 
 	}
 
 	return OHLCV{
+		Ask:        a,
+		AskBidMid:  abm,
+		Bid:        b,
 		Close:      close,
 		Expiration: exp,
 		High:       high,
