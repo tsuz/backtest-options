@@ -25,6 +25,11 @@ func NewCoveredCallStrategy(chain *model.OptChainList) (Strategy, error) {
 var coveredCallLeg = "covered-call"
 var buyStockLeg = "buy-stock"
 
+// Validate
+func (s *coveredCall) Validate(opts model.StrategyOpts) error {
+	return nil
+}
+
 // CoveredCall
 func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
 

@@ -19,5 +19,5 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(importCmd)
-	rootCmd.AddCommand(strategyCmd)
+	rootCmd.AddCommand(getStrategyCmd())
 }

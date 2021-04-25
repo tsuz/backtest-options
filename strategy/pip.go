@@ -27,14 +27,37 @@ var pipcoveredCallLeg = "covered-call"
 var pipbuyStockLeg = "buy-stock"
 var pipfarput = "far-put"
 
-// CoveredCall
+// Validate
+func (s *pip) Validate(opts model.StrategyOpts) error {
+
+	if opts.PipOpts == nil {
+		return errors.Errorf("Expected `PipOpts` to be non-nil but is nil")
+	}
+	if opts.PipOpts.MinCallExpDTE < 1 {
+		return errors.Errorf("Expected `MinCallExpDTE` to be larger than 0")
+	}
+	if opts.PipOpts.MinPutExpDTE < 1 {
+		return errors.Errorf("Expected `MinPutExpDTE` to be larger than 0")
+	}
+	if opts.PipOpts.TgtCallPxMul.IsZero() {
+		return errors.Errorf("Expected `TgtCallPxMul` to be non-zero")
+	}
+	if opts.PipOpts.TgtPutPxMul.IsZero() {
+		return errors.Errorf("Expected `TgtPutPxMul` to be non-zero")
+	}
+	return nil
+}
+
+// Run runs a pip strategy
 func (s *pip) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
 
 	newstrat := model.NewStrategyResult(opts)
 
 	start := opts.StartDate
-	shortCallMinDays := 4
-	longPutMinDays := 160
+	shortCallMinDays := opts.PipOpts.MinCallExpDTE
+	longPutMinDays := opts.PipOpts.MinPutExpDTE
+	tgtCallPxMul := opts.PipOpts.TgtCallPxMul
+	tgtPutPxMul := opts.PipOpts.TgtPutPxMul
 
 	for {
 		optchain := s.optchain.GetOptionChainForQuoteDate(start, false)
@@ -43,20 +66,21 @@ func (s *pip) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
 			break
 		}
 		quotedate := optchain.QuoteDate
+
 		px := optchain.UndPx
-		callpx := px
+		callpx := px.Mul(tgtCallPxMul)
 		callexpdate := quotedate.AddDate(0, 0, shortCallMinDays)
 		callstrike := s.getStrikePx(optchain, callexpdate, callpx)
 		if callstrike == nil {
-			log.Warnf("Exiting since strike does not exist for price %+v, expire date %+v, for quote date: %+v", callpx, callexpdate, start)
+			log.Warnf("Exiting since call strike does not exist for price %+v, expire date %+v, for quote date: %+v", callpx, callexpdate, start)
 			break
 		}
 
 		putexpdate := quotedate.AddDate(0, 0, longPutMinDays)
-		putpx := px
+		putpx := px.Mul(tgtPutPxMul)
 		putstrike := s.getStrikePx(optchain, putexpdate, putpx)
 		if putstrike == nil {
-			log.Warnf("Exiting since strike does not exist for price %+v, expire date %+v, for quote date: %+v", putpx, putexpdate, start)
+			log.Warnf("Exiting since initial put strike does not exist for price %+v, expire date %+v, for quote date: %+v", putpx, putexpdate, start)
 			break
 		}
 
@@ -113,7 +137,7 @@ func (s *pip) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
 
 		putendstrike := s.getStrikePx(expiredquote, putstrike.Exp, putstrike.S)
 		if putendstrike == nil {
-			log.Warnf("Exiting since strike does not exist for price %+v, expire date %+v, for quote date: %+v", putstrike.S, expire, expiredquote)
+			log.Warnf("Exiting since last put strike does not exist for price %+v, expire date %+v, for quote date: %+v", putstrike.S, putstrike.Exp, expiredquote)
 			break
 		}
 		putleg.CloseExec(expire, putendstrike.Put.AskBidMid)
