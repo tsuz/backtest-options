@@ -4,6 +4,7 @@ import (
 	"backtest-options/model"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
@@ -11,32 +12,52 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type coveredCall struct {
+type pip struct {
 	optchain *model.OptChainList
 }
 
-// NewCoveredCallStrategy is a new covererd call strategy
-func NewCoveredCallStrategy(chain *model.OptChainList) (Strategy, error) {
-	return &coveredCall{
+// NewPIPStrategy is a new covererd PIP strategy
+func NewPIPStrategy(chain *model.OptChainList) (Strategy, error) {
+	return &pip{
 		optchain: chain,
 	}, nil
 }
 
-var coveredCallLeg = "covered-call"
-var buyStockLeg = "buy-stock"
+var pipcoveredCallLeg = "covered-call"
+var pipbuyStockLeg = "buy-stock"
+var pipfarput = "far-put"
 
 // Validate
-func (s *coveredCall) Validate(opts model.StrategyOpts) error {
+func (s *pip) Validate(opts model.StrategyOpts) error {
+
+	if opts.PipOpts == nil {
+		return errors.Errorf("Expected `PipOpts` to be non-nil but is nil")
+	}
+	if opts.PipOpts.MinCallExpDTE < 1 {
+		return errors.Errorf("Expected `MinCallExpDTE` to be larger than 0")
+	}
+	if opts.PipOpts.MinPutExpDTE < 1 {
+		return errors.Errorf("Expected `MinPutExpDTE` to be larger than 0")
+	}
+	if opts.PipOpts.TgtCallPxMul.IsZero() {
+		return errors.Errorf("Expected `TgtCallPxMul` to be non-zero")
+	}
+	if opts.PipOpts.TgtPutPxMul.IsZero() {
+		return errors.Errorf("Expected `TgtPutPxMul` to be non-zero")
+	}
 	return nil
 }
 
-// CoveredCall
-func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
+// Run runs a pip strategy
+func (s *pip) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
 
 	newstrat := model.NewStrategyResult(opts)
 
 	start := opts.StartDate
-	minexpday := opts.MinExpDays
+	shortCallMinDays := opts.PipOpts.MinCallExpDTE
+	longPutMinDays := opts.PipOpts.MinPutExpDTE
+	tgtCallPxMul := opts.PipOpts.TgtCallPxMul
+	tgtPutPxMul := opts.PipOpts.TgtPutPxMul
 
 	for {
 		optchain := s.optchain.GetOptionChainForQuoteDate(start, false)
@@ -45,16 +66,21 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 			break
 		}
 		quotedate := optchain.QuoteDate
+
 		px := optchain.UndPx
-		expdate := quotedate.AddDate(0, 0, minexpday)
-		expchain := optchain.GetOptionChainForExpiryDate(expdate, false)
-		if expchain == nil {
-			log.Warnf("Exiting since expire does not exist for date %+v, for quote date: %+v", expdate, start)
+		callpx := px.Mul(tgtCallPxMul)
+		callexpdate := quotedate.AddDate(0, 0, shortCallMinDays)
+		callstrike := s.getStrikePx(optchain, callexpdate, callpx)
+		if callstrike == nil {
+			log.Warnf("Exiting since call strike does not exist for price %+v, expire date %+v, for quote date: %+v", callpx, callexpdate, start)
 			break
 		}
-		strike := expchain.GetOptionChainForStrike(px, false)
-		if strike == nil {
-			log.Warnf("Exiting since strike does not exist for price %+v, expire date %+v, for quote date: %+v", px, expdate, start)
+
+		putexpdate := quotedate.AddDate(0, 0, longPutMinDays)
+		putpx := px.Mul(tgtPutPxMul)
+		putstrike := s.getStrikePx(optchain, putexpdate, putpx)
+		if putstrike == nil {
+			log.Warnf("Exiting since initial put strike does not exist for price %+v, expire date %+v, for quote date: %+v", putpx, putexpdate, start)
 			break
 		}
 
@@ -73,13 +99,22 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 		optleg := model.NewOpenExec(
 			model.Option,
 			quotedate,
-			strike.Call.AskBidMid,
+			callstrike.Call.AskBidMid,
 			optqty,
 			model.Sell,
-			fmt.Sprintf("%+v C %+v", strike.S.String(), expchain.ExpireDate.Format("2006-01-02")),
+			fmt.Sprintf("%+v C %+v", callstrike.S.String(), callstrike.Exp.Format("2006-01-02")),
 		)
 
-		expire := expchain.ExpireDate
+		putleg := model.NewOpenExec(
+			model.Option,
+			quotedate,
+			putstrike.Put.AskBidMid,
+			optqty,
+			model.Buy,
+			fmt.Sprintf("%+v P %+v", putstrike.S.String(), putstrike.Exp.Format("2006-01-02")),
+		)
+
+		expire := callstrike.Exp
 		expiredquote := s.optchain.GetOptionChainForQuoteDate(expire, false)
 		if expiredquote == nil {
 			log.Debugf("Exiting since GetOptionChainForQuoteDate does not exist for quotedate: %+v, expiredate: %+v, start: %+v",
@@ -92,16 +127,25 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 
 		// close 100 underlying stocks, capped at the lower of the price and strike
 		adjendpx := endpx
-		if endpx.GreaterThan(strike.S) {
-			adjendpx = strike.S
+		if endpx.GreaterThan(callstrike.S) {
+			adjendpx = callstrike.S
 		}
+
 		stkleg.CloseExec(expire, adjendpx)
 
 		optleg.CloseExec(expire, decimal.NewFromInt(0))
 
+		putendstrike := s.getStrikePx(expiredquote, putstrike.Exp, putstrike.S)
+		if putendstrike == nil {
+			log.Warnf("Exiting since last put strike does not exist for price %+v, expire date %+v, for quote date: %+v", putstrike.S, putstrike.Exp, expiredquote)
+			break
+		}
+		putleg.CloseExec(expire, putendstrike.Put.AskBidMid)
+
 		legs := map[string]*model.ExecOpenClose{
-			coveredCallLeg: optleg,
-			buyStockLeg:    stkleg,
+			pipcoveredCallLeg: optleg,
+			pipbuyStockLeg:    stkleg,
+			pipfarput:         putleg,
 		}
 		execlegs, err := model.NewExecLegs(legs)
 		if err != nil {
@@ -117,21 +161,40 @@ func (s *coveredCall) Run(opts model.StrategyOpts) (*model.StrategyResult, error
 	return newstrat, nil
 }
 
+// getStrikePx returns strike price for a given option chain, expire time and nearest price
+func (s *pip) getStrikePx(optchain *model.OptChain, expd time.Time, px decimal.Decimal) *model.OptChainStrike {
+	chain := optchain.GetOptionChainForExpiryDate(expd, false)
+	if chain == nil {
+		log.Warnf("Exiting since expire does not exist for expire date %+v", expd)
+		return nil
+	}
+	strike := chain.GetOptionChainForStrike(px, false)
+	if strike == nil {
+		log.Warnf("Exiting since strike does not exist for price %+v, expire date %+v", px, expd)
+		return nil
+	}
+	return strike
+}
+
 // OutputDetail generates execution results
-func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
+func (s *pip) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 
 	data := [][]string{}
 	cumprofit := decimal.Decimal{}
 
 	for _, ex := range r.Execs {
 
-		cc, ok := ex.Leg[coveredCallLeg]
+		cc, ok := ex.Leg[pipcoveredCallLeg]
 		if !ok {
-			return errors.Errorf("Error %+v key is not included", coveredCallLeg)
+			return errors.Errorf("Error %+v key is not included", pipcoveredCallLeg)
 		}
-		stk, ok := ex.Leg[buyStockLeg]
+		stk, ok := ex.Leg[pipbuyStockLeg]
 		if !ok {
-			return errors.Errorf("Error %+v key is not included", buyStockLeg)
+			return errors.Errorf("Error %+v key is not included", pipbuyStockLeg)
+		}
+		put, ok := ex.Leg[pipfarput]
+		if !ok {
+			return errors.Errorf("Error %+v key is not included", pipfarput)
 		}
 
 		cumprofit = cumprofit.Add(ex.TotalProfit)
@@ -139,9 +202,12 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 			cc.Open.Date.Format(model.DateLayout),
 			cc.Close.Date.Format(model.DateLayout),
 			cc.Name,
+			put.Name,
 			ex.TotalProfit.String(),
 			cc.Open.Px.String(),
-			cc.Close.Px.String(),
+			put.Open.Px.StringFixed(2),
+			put.Close.Px.StringFixed(2),
+			put.Close.Px.Sub(put.Open.Px).StringFixed(2),
 			stk.Open.Px.String(),
 			stk.Close.Px.String(),
 			cumprofit.String(),
@@ -154,9 +220,12 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 		"Open Date",
 		"Close Date",
 		"Call Product",
+		"Put Product",
 		"Total Profit",
-		"Option Open Px",
-		"Option Close Px",
+		"Covered Call Premium",
+		"Put Open Px",
+		"Put Close Px",
+		"Put Profit",
 		"Stock Open Px",
 		"Stock Close Px",
 		"Cumulative Profit",
@@ -170,7 +239,7 @@ func (s *coveredCall) OutputDetail(w io.Writer, r *model.StrategyResult) error {
 }
 
 // OutputMeta generates meta results
-func (s *coveredCall) OutputMeta(w io.Writer, r *model.StrategyResult) error {
+func (s *pip) OutputMeta(w io.Writer, r *model.StrategyResult) error {
 
 	data := [][]string{}
 	zero := decimal.NewFromInt(0)
@@ -182,13 +251,13 @@ func (s *coveredCall) OutputMeta(w io.Writer, r *model.StrategyResult) error {
 	lastPx := decimal.NewFromInt(0)
 
 	for idx, ex := range r.Execs {
-		cc, ok := ex.Leg[coveredCallLeg]
+		cc, ok := ex.Leg[pipcoveredCallLeg]
 		if !ok {
-			return errors.Errorf("Error %+v key is not included", coveredCallLeg)
+			return errors.Errorf("Error %+v key is not included", pipcoveredCallLeg)
 		}
-		stk, ok := ex.Leg[buyStockLeg]
+		stk, ok := ex.Leg[pipbuyStockLeg]
 		if !ok {
-			return errors.Errorf("Error %+v key is not included", buyStockLeg)
+			return errors.Errorf("Error %+v key is not included", pipbuyStockLeg)
 		}
 		if idx == 0 {
 			firstPx = stk.Open.Px
