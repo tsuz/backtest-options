@@ -65,3 +65,17 @@ Strategies are run like below
 - [ ] Ability to run multiple strategies side by side for a comparison
 - [ ] Import multiple symbols from CBOE
 - [ ] Import Nikkei 225 Options data
+
+
+## Strategies parameter
+
+### Covered Call
+
+TODO
+
+### PIP Strategy
+
+| Param | Comment | Default |
+|--|--|--|
+| minPutDTE | MinPutExpDTE is the minimum number of DTE until the next expiry for the put option | 150 |
+| minCallDTE | MinCallExpDTE is the minimum number of DTE until the next expiry for the call option | 4 |
