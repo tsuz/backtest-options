@@ -87,7 +87,7 @@ func (s *pip) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
 			putstrike.Put.AskBidMid,
 			optqty,
 			model.Buy,
-			fmt.Sprintf("%+v C %+v", putstrike.S.String(), putstrike.Exp.Format("2006-01-02")),
+			fmt.Sprintf("%+v P %+v", putstrike.S.String(), putstrike.Exp.Format("2006-01-02")),
 		)
 
 		expire := callstrike.Exp
