@@ -133,9 +133,6 @@ func (s *pip) Run(opts model.StrategyOpts) (*model.StrategyResult, error) {
 
 		// the expiry date is the new start date
 		start = expire
-		// if expire.Weekday() == time.Saturday {
-		// 	start = expire.Add(time.Hour * 24 * -1)
-		// }
 	}
 	return newstrat, nil
 }
