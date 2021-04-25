@@ -33,6 +33,7 @@ type OptChainExp struct {
 
 // OptChainStrike is a row of option chain for strike, put, and call
 type OptChainStrike struct {
+	Exp  time.Time
 	S    decimal.Decimal
 	Put  OHLCV
 	Call OHLCV
@@ -102,7 +103,8 @@ func NewOptionChain(data []OHLCV) (*OptChainList, error) {
 			for _, ohlcv := range ohlcvs {
 				if _, ok := strikeMap[ohlcv.Strike.String()]; !ok {
 					strikeMap[ohlcv.Strike.String()] = &OptChainStrike{
-						S: ohlcv.Strike,
+						S:   ohlcv.Strike,
+						Exp: exp,
 					}
 					strikes = append(strikes, ohlcv.Strike)
 				}

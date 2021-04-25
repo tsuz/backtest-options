@@ -60,18 +60,45 @@ var strategyCmd = &cobra.Command{
 			log.Fatal("Failed to make option chain")
 		}
 
-		s, err := strategy.NewCoveredCallStrategy(chain)
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "Error creating new strategy"))
+		switch args[0] {
+		case "coveredcall":
+			cc(chain, opts)
+			break
+		case "pip":
+			pip(chain, opts)
+			break
 		}
-		log.Infof("Starting strategy with opts %+v", opts)
-		result, err := s.Run(opts)
-		if err != nil {
-			log.Fatal(errors.Wrap(err, "Error running covered call strategy"))
-		}
-		stdout := os.Stdout
-		s.OutputDetail(stdout, result)
-		s.OutputMeta(stdout, result)
+
 		log.Info("Successfully finished running")
 	},
+}
+
+func cc(chain *model.OptChainList, opts model.StrategyOpts) {
+	s, err := strategy.NewCoveredCallStrategy(chain)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Error creating new strategy"))
+	}
+	log.Infof("Starting strategy with opts %+v", opts)
+	result, err := s.Run(opts)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Error running covered call strategy"))
+	}
+	stdout := os.Stdout
+	s.OutputDetail(stdout, result)
+	s.OutputMeta(stdout, result)
+}
+
+func pip(chain *model.OptChainList, opts model.StrategyOpts) {
+	s, err := strategy.NewPIPStrategy(chain)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Error creating new strategy"))
+	}
+	log.Infof("Starting strategy with opts %+v", opts)
+	result, err := s.Run(opts)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Error running covered call strategy"))
+	}
+	stdout := os.Stdout
+	s.OutputDetail(stdout, result)
+	s.OutputMeta(stdout, result)
 }
